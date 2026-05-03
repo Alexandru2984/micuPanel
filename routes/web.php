@@ -34,6 +34,11 @@ Route::get('/dashboard', function () {
     return view('dashboard', compact('stats', 'recent_projects'));
 })->middleware(['auth'])->name('dashboard');
 
+Route::get('/projects', function () {
+    $projects = Project::orderBy('name', 'asc')->get();
+    return view('projects.index', compact('projects'));
+})->middleware(['auth'])->name('projects.index');
+
 Route::get('/docs', function () {
     return view('docs');
 })->middleware(['auth'])->name('docs');
