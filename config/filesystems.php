@@ -33,7 +33,9 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            // Disabled: the app does not serve private files over HTTP, so the
+            // signed storage/{path} serve + upload routes are unnecessary surface.
+            'serve' => false,
             'throw' => false,
             'report' => false,
         ],
