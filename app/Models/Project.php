@@ -69,7 +69,11 @@ class Project extends Model
         return $this->hasMany(Service::class);
     }
 
-    public function notes(): HasMany
+    /**
+     * Project notes (Note records). Named projectNotes() to avoid shadowing
+     * the free-text `notes` column, which otherwise always wins on $project->notes.
+     */
+    public function projectNotes(): HasMany
     {
         return $this->hasMany(Note::class);
     }

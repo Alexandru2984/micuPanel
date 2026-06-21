@@ -1,76 +1,28 @@
 <?php
 
-use Illuminate\Http\Request;
+use App\Http\Controllers\Api\AccountController;
+use App\Http\Controllers\Api\CatalogController;
+use App\Http\Controllers\Api\ExportController;
+use App\Http\Controllers\Api\ProjectController;
+use App\Http\Controllers\Api\StatsController;
 use Illuminate\Support\Facades\Route;
-use App\Models\Project;
-use App\Models\Domain;
-use App\Models\Tag;
-use App\Models\Service;
 
-Route::get('/health', function () {
-    return response()->json(['status' => 'ok', 'service' => 'micupanel']);
-});
+/*
+| All API endpoints require a Sanctum personal access token
+| (Authorization: Bearer <token>) and are rate limited to 60 req/min/user.
+| Issue a token with: php artisan micupanel:token you@example.com
+*/
 
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/user', function (Request $request) {
-        return $request->user();
-    });
+Route::middleware(['auth:sanctum', 'throttle:api'])->name('api.')->group(function () {
+    Route::get('/user', AccountController::class);
 
-    Route::get('/projects', function () {
-        return Project::all();
-    });
-    
-    Route::get('/projects/{id}', function ($id) {
-        return Project::findOrFail($id);
-    });
+    Route::apiResource('projects', ProjectController::class);
 
-    Route::post('/projects', function (Request $request) {
-        return Project::create($request->all());
-    });
+    Route::get('/stats', StatsController::class);
+    Route::get('/tags', [CatalogController::class, 'tags']);
+    Route::get('/domains', [CatalogController::class, 'domains']);
+    Route::get('/services', [CatalogController::class, 'services']);
 
-    Route::put('/projects/{id}', function (Request $request, $id) {
-        $project = Project::findOrFail($id);
-        $project->update($request->all());
-        return $project;
-    });
-
-    Route::delete('/projects/{id}', function ($id) {
-        Project::findOrFail($id)->delete();
-        return response()->json(['message' => 'Deleted']);
-    });
-
-    Route::get('/tags', function () {
-        return Tag::all();
-    });
-
-    Route::get('/domains', function () {
-        return Domain::all();
-    });
-
-    Route::get('/services', function () {
-        return Service::all();
-    });
-
-    Route::get('/stats', function () {
-        return response()->json([
-            'projects' => Project::count(),
-            'domains' => Domain::count(),
-            'services' => Service::count(),
-        ]);
-    });
-
-    Route::get('/export/projects.json', function () {
-        return response()->json(Project::with(['domains', 'repositories', 'services', 'notes', 'quickLinks'])->get());
-    });
-
-    Route::get('/export/projects.csv', function () {
-        $projects = Project::all();
-        $csvData = "id,name,slug,status,environment\n";
-        foreach ($projects as $project) {
-            $csvData .= "{$project->id},{$project->name},{$project->slug},{$project->status},{$project->environment}\n";
-        }
-        return response($csvData)
-            ->header('Content-Type', 'text/csv')
-            ->header('Content-Disposition', 'attachment; filename="projects.csv"');
-    });
+    Route::get('/export/projects.json', [ExportController::class, 'json']);
+    Route::get('/export/projects.csv', [ExportController::class, 'csv']);
 });
